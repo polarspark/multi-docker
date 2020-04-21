@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t polarspark/react-test -f ./client/Dockerfile.dev ./client/Dockerfile.dev
+
+script:
+  - docker run -e CI=true polarspark/react-test npm test
+
+after_success:
+  - docker build -t polarspark/multi-client ./client
+  - docker build -t polarspark/multi-nginx ./nginx
+  - docker build -t polarspark/multi-server ./server
+  - docker build -t polarspark/multi-worker ./worker
+  #Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #Take those images and push them to docker hub
+  - docker push polarspark/multi-client
+  - docker push polarspark/multi-nginx
+  - docker push polarspark/multi-server
+  - docker push polarspark/multi-worker
